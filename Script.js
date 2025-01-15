@@ -6,7 +6,6 @@ const path = require('path');
 const app = express();
 const port = 3000;
 
-// Setup storage for multer
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, 'uploads/');
@@ -18,17 +17,13 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-app.use(express.static('public'));
-
-// Endpoint to handle file uploads
 app.post('/upload', upload.single('audio'), (req, res) => {
-    const { userName, code } = req.body;
     const filePath = path.join(__dirname, 'uploads', req.file.filename);
 
     console.log(`Received file: ${req.file.filename}`);
-    console.log(`User: ${userName}, Code: ${code}`);
 
-    // Simulate playback and deletion after playback
+    // Optionally add logic to transcode or verify audio formats
+
     setTimeout(() => {
         fs.unlink(filePath, (err) => {
             if (err) {
@@ -37,7 +32,7 @@ app.post('/upload', upload.single('audio'), (req, res) => {
                 console.log('File deleted:', req.file.filename);
             }
         });
-    }, 5000); // Delete after 5 seconds
+    }, 5000);
 
     res.send('File received and will be deleted after playback.');
 });
