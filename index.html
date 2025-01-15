@@ -22,27 +22,37 @@
         let audio;
 
         document.getElementById('recordBtn').addEventListener('click', async () => {
-            audioChunks = [];  // Reset chunks for a new recording
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+            console.log('Record button clicked');
+            
+            try {
+                audioChunks = [];  // Reset chunks for a new recording
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                console.log('Microphone access granted');
+                
+                mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+                mediaRecorder.start();
 
-            mediaRecorder.start();
+                mediaRecorder.ondataavailable = event => {
+                    audioChunks.push(event.data);
+                };
 
-            mediaRecorder.ondataavailable = event => {
-                audioChunks.push(event.data);
-            };
+                mediaRecorder.onstop = () => {
+                    audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    audioUrl = URL.createObjectURL(audioBlob);
+                    audio = new Audio(audioUrl);
 
-            mediaRecorder.onstop = () => {
-                audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                audioUrl = URL.createObjectURL(audioBlob);
-                audio = new Audio(audioUrl);
+                    document.getElementById('playBtn').disabled = false;
+                    document.getElementById('sendBtn').disabled = false;
+                    console.log('Recording stopped and processed');
+                };
 
-                document.getElementById('playBtn').disabled = false;
-                document.getElementById('sendBtn').disabled = false;
-            };
-
-            document.getElementById('recordBtn').disabled = true;
-            document.getElementById('stopBtn').disabled = false;
+                document.getElementById('recordBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+                console.log('Recording started');
+            } catch (error) {
+                console.error('Error accessing the microphone', error);
+                alert('Failed to access the microphone. Please check permissions.');
+            }
         });
 
         document.getElementById('stopBtn').addEventListener('click', () => {
@@ -50,6 +60,7 @@
 
             document.getElementById('recordBtn').disabled = false;
             document.getElementById('stopBtn').disabled = true;
+            console.log('Recording stopped');
         });
 
         document.getElementById('playBtn').addEventListener('click', () => {
