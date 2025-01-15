@@ -14,7 +14,25 @@
     <input type="text" id="userName" placeholder="Enter your name">
     <input type="text" id="codeInput" placeholder="Enter code">
 
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-storage.js"></script>
+
     <script>
+        // Firebase configuration for FusionWalkieTalkieBE
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "FusionWalkieTalkieBE.firebaseapp.com",
+            projectId: "FusionWalkieTalkieBE",
+            storageBucket: "FusionWalkieTalkieBE.appspot.com",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const storage = firebase.storage();
+
         let mediaRecorder;
         let audioChunks = [];
         let audioBlob;
@@ -41,10 +59,6 @@
                     audioUrl = URL.createObjectURL(audioBlob);
                     audio = new Audio(audioUrl);
 
-                    // Debugging
-                    console.log('Audio URL created:', audioUrl);
-                    console.log('Audio object:', audio);
-
                     document.getElementById('playBtn').disabled = false;
                     document.getElementById('sendBtn').disabled = false;
                     console.log('Recording stopped and processed');
@@ -68,17 +82,7 @@
         });
 
         document.getElementById('playBtn').addEventListener('click', () => {
-            if (audio) {
-                audio.play()
-                    .then(() => {
-                        console.log('Audio is playing');
-                    })
-                    .catch((err) => {
-                        console.error('Error playing audio:', err);
-                    });
-            } else {
-                console.log('Audio object is not defined');
-            }
+            audio.play();
         });
 
         document.getElementById('sendBtn').addEventListener('click', async () => {
@@ -90,17 +94,31 @@
                 return;
             }
 
-            const formData = new FormData();
-            formData.append('audio', audioBlob, `${userName}.webm`);  // Use correct extension
-            formData.append('userName', userName);
-            formData.append('code', code);
+            // Create a file name
+            const fileName = `${userName}_${Date.now()}.webm`;
 
-            await fetch('https://charliefdgfdgfd.github.io/wt/upload', {
-                method: 'POST',
-                body: formData,
-            });
+            // Upload audio to Firebase Storage
+            const storageRef = storage.ref('audios/' + fileName);
+            const uploadTask = storageRef.put(audioBlob);
 
-            alert("Audio sent!");
+            uploadTask.on('state_changed',
+                (snapshot) => {
+                    // You can monitor upload progress here if you like
+                    console.log((snapshot.bytesTransferred / snapshot.totalBytes) * 100 + "% uploaded");
+                },
+                (error) => {
+                    console.error("Upload failed:", error);
+                    alert("Error uploading audio.");
+                },
+                async () => {
+                    // Get the download URL after upload is complete
+                    const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+                    console.log('File available at', downloadURL);
+
+                    // Optionally, you can store the URL in a database (Firestore) or use it as needed.
+                    alert("Audio sent successfully!");
+                }
+            );
         });
     </script>
 </body>
