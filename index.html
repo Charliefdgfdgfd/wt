@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Walkie-Talkie App</title>
+</head>
+<body>
+    <h1>Walkie-Talkie App</h1>
+    <button id="recordBtn">Record</button>
+    <button id="stopBtn" disabled>Stop</button>
+    <button id="playBtn" disabled>Play</button>
+    <button id="sendBtn" disabled>Send</button>
+    <input type="text" id="userName" placeholder="Enter your name">
+    <input type="text" id="codeInput" placeholder="Enter code">
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let audioBlob;
+        let audioUrl;
+        let audio;
+
+        document.getElementById('recordBtn').addEventListener('click', async () => {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+
+            mediaRecorder.start();
+
+            mediaRecorder.ondataavailable = event => {
+                audioChunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                audioUrl = URL.createObjectURL(audioBlob);
+                audio = new Audio(audioUrl);
+
+                document.getElementById('playBtn').disabled = false;
+                document.getElementById('sendBtn').disabled = false;
+            };
+
+            document.getElementById('recordBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+        });
+
+        document.getElementById('stopBtn').addEventListener('click', () => {
+            mediaRecorder.stop();
+
+            document.getElementById('recordBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+        });
+
+        document.getElementById('playBtn').addEventListener('click', () => {
+            audio.play();
+        });
+
+        document.getElementById('sendBtn').addEventListener('click', async () => {
+            const userName = document.getElementById('userName').value;
+            const code = document.getElementById('codeInput').value;
+
+            if (!userName || !code) {
+                alert("Please enter your name and code.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('audio', audioBlob, `${userName}.wav`);
+            formData.append('userName', userName);
+            formData.append('code', code);
+
+            await fetch('https://your-server-url/upload', {
+                method: 'POST',
+                body: formData,
+            });
+
+            alert("Audio sent!");
+        });
+    </script>
+</body>
+</html>
