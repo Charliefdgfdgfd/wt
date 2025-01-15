@@ -14,41 +14,33 @@
     <input type="text" id="userName" placeholder="Enter your name">
     <input type="text" id="codeInput" placeholder="Enter code">
 
-    <script>
-        let mediaRecorder;
-        let audioChunks = [];
-        let audioBlob;
-        let audioUrl;
-        let audio;
+   <script>
+    // Same setup as before
 
-        document.getElementById('recordBtn').addEventListener('click', async () => {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream);
+    document.getElementById('recordBtn').addEventListener('click', async () => {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
 
-            mediaRecorder.start();
+        mediaRecorder.start();
 
-            mediaRecorder.ondataavailable = event => {
-                audioChunks.push(event.data);
-            };
+        mediaRecorder.ondataavailable = event => {
+            audioChunks.push(event.data);
+        };
 
-            mediaRecorder.onstop = () => {
-                audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                audioUrl = URL.createObjectURL(audioBlob);
-                audio = new Audio(audioUrl);
+        mediaRecorder.onstop = () => {
+            audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            audioUrl = URL.createObjectURL(audioBlob);
+            audio = new Audio(audioUrl);
 
-                document.getElementById('playBtn').disabled = false;
-                document.getElementById('sendBtn').disabled = false;
-            };
+            document.getElementById('playBtn').disabled = false;
+            document.getElementById('sendBtn').disabled = false;
+        };
 
-            document.getElementById('recordBtn').disabled = true;
-            document.getElementById('stopBtn').disabled = false;
-        });
+        document.getElementById('recordBtn').disabled = true;
+        document.getElementById('stopBtn').disabled = false;
+    });
 
-        document.getElementById('stopBtn').addEventListener('click', () => {
-            mediaRecorder.stop();
 
-            document.getElementById('recordBtn').disabled = false;
-            document.getElementById('stopBtn').disabled = true;
         });
 
         document.getElementById('playBtn').addEventListener('click', () => {
